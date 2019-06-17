@@ -5,7 +5,7 @@ $(NAME):
 	@echo "\033[32;01mDependencies installed  successfully!"
 
 start:
-	@npm run babel-node source/index.js
+	@npm run start source/index.js
 
 build:
 	@rm -rf dist
