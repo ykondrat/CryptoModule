@@ -8,6 +8,7 @@ import { validateSchema } from './instruments';
 import {
   algorithm,
   password,
+  privateKey,
 } from './config';
 
 class Guardian extends Transform {
@@ -31,14 +32,17 @@ class Guardian extends Transform {
 
   async #modify (data) {
     const { name, email, password } = data.payload;
+    const encryptedEmail = await this.#encrypt(email);
+    const encryptedPassword = await this.#encrypt(password);
     const modifiedData = {
       payload: {
         name,
-        email:    await this.#encrypt(email),
-        password: await this.#encrypt(password),
+        email:    encryptedEmail,
+        password: encryptedPassword,
       },
       meta: {
-        source: Guardian.name.toLowerCase(),
+        source:    Guardian.name.toLowerCase(),
+        signature: this.#sign(encryptedEmail, encryptedPassword)
       },
     };
 
@@ -47,12 +51,21 @@ class Guardian extends Transform {
     return modifiedData;
   }
 
+  #sign (email, password) {
+    const sign = crypto.createSign('SHA256');
+
+    sign.update(email);
+    sign.update(password);
+    sign.end();
+
+    return sign.sign(privateKey, 'hex');
+  }
+
   async #encrypt (value) {
     try {
       const key = await this.#scrypt(password, 'salt', 24);
-      // const buf = Buffer.alloc(16);
-      // const iv = await this.#randomFill(buf, 10);
-      const iv = Buffer.alloc(16, 0);
+      const buf = Buffer.alloc(16);
+      const iv = await this.#randomFill(buf, 10);
       const cipher = crypto.createCipheriv(algorithm, key, iv);
 
       let encrypted = cipher.update(value, 'utf8', 'hex');

@@ -3,16 +3,16 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 
 // Streams
-import Ui from './example-1/Ui';
-import Guardian from './example-1/Guardian';
-import AccountManager from './example-1/AccountManager';
+import Ui from './example-2/Ui';
+import Guardian from './example-2/Guardian';
+import AccountManager from './example-2/AccountManager';
 
 // Config
 import {
   uiOptions,
   guardianOptions,
   accountManagerOptions,
-} from './example-1/config';
+} from './example-2/config';
 
 const customers = [
   {

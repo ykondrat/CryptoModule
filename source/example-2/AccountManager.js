@@ -8,6 +8,7 @@ import { validateSchema } from './instruments';
 import {
   algorithm,
   password,
+  publicKey,
 } from './config';
 
 class AccountManager extends Writable {
@@ -22,8 +23,10 @@ class AccountManager extends Writable {
   _write (chunk, encoding, done) {
     const { payload } = chunk;
 
-    this.data.push(this.#modify(payload));
-    done();
+    if (this.#verify(chunk)) {
+      this.data.push(this.#modify(payload));
+      done();
+    }
   }
 
   #modify (data) {
@@ -39,6 +42,18 @@ class AccountManager extends Writable {
     validateSchema(modifiedData, AccountManager.name);
 
     return modifiedData;
+  }
+
+  #verify ({ payload, meta }) {
+    const { signature } = meta;
+    const { email, password } = payload;
+    const verify = crypto.createVerify('SHA256');
+
+    verify.update(email);
+    verify.update(password);
+    verify.end();
+
+    return verify.verify(publicKey, signature, 'hex');
   }
 
   async #decrypt (value) {
